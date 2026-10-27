@@ -39,9 +39,9 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -122,13 +122,14 @@ jobs:
 
           # Assinatura ad-hoc (sem certificado): exigida para rodar em Apple Silicon.
           codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
 
           mkdir -p dmg dist
           cp -R "$app" dmg/
           ln -s /Applications dmg/Applications
           hdiutil create -volname "Track Your Meals" -srcfolder dmg -ov -format UDZO "dist/${{ matrix.file }}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.rid }}
           path: dist/${{ matrix.file }}
@@ -142,9 +143,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
