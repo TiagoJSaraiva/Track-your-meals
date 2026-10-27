@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TrackYourMeals.Models;
@@ -11,6 +12,9 @@ public sealed class MainViewModel : ObservableObject
     private readonly DietDayService dietDayService;
     private readonly FoodService foodService;
     private readonly FoodLogService foodLogService;
+    private readonly SettingsService settingsService;
+    private readonly ThemeService themeService;
+    private readonly AppSettings settings;
 
     private DietDay? currentDay;
     private bool isBusy;
@@ -31,15 +35,22 @@ public sealed class MainViewModel : ObservableObject
     public MainViewModel(
         DietDayService dietDayService,
         FoodService foodService,
-        FoodLogService foodLogService)
+        FoodLogService foodLogService,
+        SettingsService settingsService,
+        ThemeService themeService,
+        AppSettings settings)
     {
         this.dietDayService = dietDayService;
         this.foodService = foodService;
         this.foodLogService = foodLogService;
+        this.settingsService = settingsService;
+        this.themeService = themeService;
+        this.settings = settings;
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         AddFoodCommand = new AsyncRelayCommand(AddFoodAsync, CanRunCommand);
         CloseDayCommand = new AsyncRelayCommand(CloseDayAsync, CanRunCommand);
+        ToggleThemeCommand = new RelayCommand(ToggleTheme);
     }
 
     public ObservableCollection<FoodRowViewModel> Foods { get; } = new();
@@ -51,6 +62,12 @@ public sealed class MainViewModel : ObservableObject
     public AsyncRelayCommand AddFoodCommand { get; }
 
     public AsyncRelayCommand CloseDayCommand { get; }
+
+    public RelayCommand ToggleThemeCommand { get; }
+
+    public string ThemeToggleText => themeService.CurrentTheme == AppTheme.Dark
+        ? "Modo claro"
+        : "Modo escuro";
 
     public bool IsBusy
     {
@@ -295,6 +312,28 @@ public sealed class MainViewModel : ObservableObject
             await RefreshAsync();
             StatusMessage = "Dia encerrado. Um novo dia foi iniciado.";
         });
+    }
+
+    private void ToggleTheme()
+    {
+        var theme = themeService.CurrentTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
+        themeService.Apply(theme);
+        OnPropertyChanged(nameof(ThemeToggleText));
+
+        settings.Theme = theme;
+        SaveSettings();
+    }
+
+    private void SaveSettings()
+    {
+        try
+        {
+            settingsService.Save(settings);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorMessage = $"Não foi possível salvar as preferências: {ex.Message}";
+        }
     }
 
     private async Task RefreshAsync()

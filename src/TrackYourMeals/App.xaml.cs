@@ -14,6 +14,17 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
 
         var dbContextFactory = new TrackYourMealsDbContextFactory();
+        var settingsService = new SettingsService();
+        var themeService = new ThemeService();
+
+        var settings = settingsService.Load();
+        themeService.Apply(settings.Theme ?? ThemeService.GetSystemTheme());
+
+        // Aplica a barra de título do tema em toda janela que for aberta.
+        EventManager.RegisterClassHandler(
+            typeof(Window),
+            FrameworkElement.LoadedEvent,
+            new RoutedEventHandler((sender, _) => themeService.ApplyTitleBar((Window)sender)));
 
         try
         {
@@ -23,7 +34,10 @@ public partial class App : Application
             var viewModel = new MainViewModel(
                 new DietDayService(dbContextFactory),
                 new FoodService(dbContextFactory),
-                new FoodLogService(dbContextFactory));
+                new FoodLogService(dbContextFactory),
+                settingsService,
+                themeService,
+                settings);
 
             await viewModel.LoadAsync();
 

@@ -9,20 +9,21 @@
         Height="760"
         MinWidth="1080"
         MinHeight="680"
-        Background="{StaticResource SurfaceBrush}"
+        Background="{DynamicResource SurfaceBrush}"
+        Foreground="{DynamicResource InkBrush}"
         FontFamily="Segoe UI"
         FontSize="13">
     <Window.Resources>
         <Style x:Key="PanelBorderStyle" TargetType="{x:Type Border}">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="14" />
         </Style>
 
         <Style x:Key="FieldLabelStyle" TargetType="{x:Type TextBlock}">
-            <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedInkBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
@@ -34,33 +35,41 @@
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="RowHeaderWidth" Value="0" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="AlternatingRowBackground" Value="#F8FAFC" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBrush}" />
+            <Setter Property="RowBackground" Value="{DynamicResource InputBrush}" />
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource AltRowBrush}" />
         </Style>
 
         <Style TargetType="{x:Type DataGridColumnHeader}">
             <Setter Property="Padding" Value="8,7" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
-            <Setter Property="Background" Value="#F0F4F7" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedInkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource HeaderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
         </Style>
 
         <Style TargetType="{x:Type DataGridCell}">
             <Setter Property="Padding" Value="6,3" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource SelectionInkBrush}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="{x:Type DataGridRow}">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsActive}" Value="False">
-                    <Setter Property="Foreground" Value="#7A8793" />
+                    <Setter Property="Foreground" Value="{DynamicResource InactiveInkBrush}" />
                     <Setter Property="Opacity" Value="0.78" />
                 </DataTrigger>
             </Style.Triggers>
@@ -82,6 +91,10 @@
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
+                    <Button Content="{Binding ThemeToggleText}"
+                            Command="{Binding ToggleThemeCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,8,0" />
                     <Button Content="Recarregar"
                             Command="{Binding LoadCommand}"
                             Style="{StaticResource SecondaryButtonStyle}"
@@ -95,15 +108,15 @@
                     <TextBlock Text="Track Your Meals"
                                FontSize="24"
                                FontWeight="SemiBold"
-                               Foreground="{StaticResource InkBrush}" />
+                               Foreground="{DynamicResource InkBrush}" />
                     <StackPanel Orientation="Horizontal"
                                 Margin="0,6,0,0">
                         <TextBlock Text="{Binding CurrentDayLabel}"
-                                   Foreground="{StaticResource MutedInkBrush}" />
+                                   Foreground="{DynamicResource MutedInkBrush}" />
                         <TextBlock Text="  |  "
-                                   Foreground="{StaticResource MutedInkBrush}" />
+                                   Foreground="{DynamicResource MutedInkBrush}" />
                         <TextBlock Text="{Binding DatabaseStatusLabel}"
-                                   Foreground="{StaticResource MutedInkBrush}" />
+                                   Foreground="{DynamicResource MutedInkBrush}" />
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
@@ -234,7 +247,7 @@
                                         <StackPanel>
                                             <TextBlock Text="{Binding ConsumedCalories, StringFormat={}{0:N0} kcal}" />
                                             <TextBlock FontSize="11"
-                                                       Foreground="{StaticResource MutedInkBrush}">
+                                                       Foreground="{DynamicResource MutedInkBrush}">
                                                 <Run Text="{Binding ConsumedProtein, StringFormat={}{0:N1}, Mode=OneWay}" />
                                                 <Run Text=" P  " />
                                                 <Run Text="{Binding ConsumedCarbs, StringFormat={}{0:N1}, Mode=OneWay}" />
@@ -435,11 +448,11 @@
 
             <TextBlock Grid.Column="0"
                        Text="{Binding StatusMessage}"
-                       Foreground="{StaticResource PrimaryBrush}"
+                       Foreground="{DynamicResource PrimaryBrush}"
                        VerticalAlignment="Center" />
             <TextBlock Grid.Column="1"
                        Text="{Binding ErrorMessage}"
-                       Foreground="#B42318"
+                       Foreground="{DynamicResource ErrorBrush}"
                        TextAlignment="Right"
                        VerticalAlignment="Center" />
         </Grid>
