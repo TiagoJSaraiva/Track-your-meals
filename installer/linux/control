@@ -1,0 +1,11 @@
+Package: trackyourmeals
+Version: __VERSION__
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Tiago Saraiva <saraivajtiago@gmail.com>
+Depends: libc6, libx11-6, libice6, libsm6, libfontconfig1
+Homepage: https://github.com/TiagoJSaraiva/Track-your-meals
+Description: Plano alimentar e registro do consumo diário
+ Monte um plano alimentar com metas diárias e registre o que você consome
+ ao longo do dia. Os dados ficam salvos localmente em SQLite.

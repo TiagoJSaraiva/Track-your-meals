@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Track Your Meals
+Comment=Plano alimentar e registro do consumo diário
+Exec=/usr/bin/trackyourmeals
+Icon=trackyourmeals
+Terminal=false
+Categories=Utility;
+StartupWMClass=TrackYourMeals

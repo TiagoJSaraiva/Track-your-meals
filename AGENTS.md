@@ -38,6 +38,15 @@ Para validar alterações, use `dotnet build` (o projeto não tem testes automat
 - Preferências do usuário (tema, zoom etc.) ficam em `AppSettings` e são salvas pelo `SettingsService`, não no banco.
 - O layout precisa funcionar com zoom entre 50% e 200%. O conteúdo da janela é escalado por um `LayoutTransformControl` (veja `MainWindow.axaml.cs`).
 
+## Releases
+
+- O workflow `.github/workflows/release.yml` gera os instaladores quando uma tag `v*` é enviada e cria a Release no GitHub. Executado manualmente, ele só compila e deixa os arquivos como artifacts.
+- A versão vem da tag (`v1.2.3` vira `1.2.3`). Mantenha `<Version>` do csproj igual à última tag.
+- Arquivos de empacotamento em `installer/`: `windows/TrackYourMeals.iss` (Inno Setup), `linux/` (`control` e `.desktop` do pacote `.deb`) e `macos/Info.plist`. O texto da Release vem de `.github/release-notes.md`.
+- **Não mude os nomes dos arquivos gerados** (`TrackYourMeals-Setup-win-x64.exe`, `trackyourmeals_linux_amd64.deb`, `TrackYourMeals-macOS-AppleSilicon.dmg`, `TrackYourMeals-macOS-Intel.dmg`): links externos dependem deles.
+- Não altere o `AppId` do `.iss`; ele liga as versões instaladas no Windows.
+- O ícone fica em `src/TrackYourMeals/Assets/` (`icon.png` de 1024 px e `icon.ico`). O `.icns` do macOS é gerado no workflow a partir do PNG.
+
 ## Guia de uso: revisão obrigatória
 
 O app tem um guia de uso em `src/TrackYourMeals/HelpWindow.axaml`, aberto pelo botão "Ajuda" ou pela tecla F1.

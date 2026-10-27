@@ -1,0 +1,164 @@
+# Gera os instaladores de Windows, Linux e macOS.
+# - Tag "v*" (ex.: v1.0.0): compila e publica a Release com os arquivos.
+# - Execução manual (workflow_dispatch): só compila; os arquivos ficam como artifacts do run.
+# Os nomes dos arquivos não têm versão de propósito: o link do portfólio usa /releases/latest.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT: src/TrackYourMeals/TrackYourMeals.csproj
+
+jobs:
+  build:
+    name: Build (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+            file: TrackYourMeals-Setup-win-x64.exe
+          - rid: linux-x64
+            os: ubuntu-latest
+            file: trackyourmeals_linux_amd64.deb
+          - rid: osx-arm64
+            os: macos-latest
+            file: TrackYourMeals-macOS-AppleSilicon.dmg
+          - rid: osx-x64
+            os: macos-latest
+            file: TrackYourMeals-macOS-Intel.dmg
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Definir versão
+        run: |
+          # Na tag v1.2.3 a versão é 1.2.3; na execução manual, a do csproj.
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$PROJECT")"
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Versão inválida: '$VERSION' (use tags no formato v1.2.3)" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Publicar
+        run: >
+          dotnet publish "$PROJECT"
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:Version=$VERSION
+          -p:DebugType=none
+          -o publish
+
+      - name: Empacotar (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=$env:VERSION" `
+            "/DPublishDir=$PWD\publish" `
+            "/O$PWD\dist" `
+            installer\windows\TrackYourMeals.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Empacotar (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+
+          root=pkgroot
+          mkdir -p "$root/DEBIAN" "$root/opt/trackyourmeals" "$root/usr/bin" \
+            "$root/usr/share/applications" "$root/usr/share/icons/hicolor/256x256/apps"
+
+          cp -R publish/. "$root/opt/trackyourmeals/"
+          chmod 755 "$root/opt/trackyourmeals/TrackYourMeals"
+          ln -s /opt/trackyourmeals/TrackYourMeals "$root/usr/bin/trackyourmeals"
+          cp installer/linux/trackyourmeals.desktop "$root/usr/share/applications/"
+          convert src/TrackYourMeals/Assets/icon.png -resize 256x256 \
+            "$root/usr/share/icons/hicolor/256x256/apps/trackyourmeals.png"
+          sed "s/__VERSION__/$VERSION/" installer/linux/control > "$root/DEBIAN/control"
+          find "$root" -type d -exec chmod 755 {} +
+
+          mkdir -p dist
+          dpkg-deb --build --root-owner-group "$root" "dist/${{ matrix.file }}"
+
+      - name: Empacotar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          app="Track Your Meals.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp -R publish/. "$app/Contents/MacOS/"
+          chmod +x "$app/Contents/MacOS/TrackYourMeals"
+          sed "s/__VERSION__/$VERSION/g" installer/macos/Info.plist > "$app/Contents/Info.plist"
+
+          # .icns gerado a partir do PNG de 1024 px.
+          mkdir icon.iconset
+          for size in 16 32 128 256 512; do
+            sips -z $size $size src/TrackYourMeals/Assets/icon.png --out "icon.iconset/icon_${size}x${size}.png" > /dev/null
+            sips -z $((size * 2)) $((size * 2)) src/TrackYourMeals/Assets/icon.png --out "icon.iconset/icon_${size}x${size}@2x.png" > /dev/null
+          done
+          iconutil -c icns icon.iconset -o "$app/Contents/Resources/icon.icns"
+
+          # Assinatura ad-hoc (sem certificado): exigida para rodar em Apple Silicon.
+          codesign --force --deep --sign - "$app"
+
+          mkdir -p dmg dist
+          cp -R "$app" dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Track Your Meals" -srcfolder dmg -ov -format UDZO "dist/${{ matrix.file }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rid }}
+          path: dist/${{ matrix.file }}
+          if-no-files-found: error
+
+  release:
+    name: Publicar Release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Criar Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          sed -e "s|__VERSION__|$version|g" \
+              -e "s|__TAG__|$GITHUB_REF_NAME|g" \
+              -e "s|__REPO_URL__|$REPO_URL|g" \
+              .github/release-notes.md > notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Track Your Meals $version" \
+            --notes-file notes.md
