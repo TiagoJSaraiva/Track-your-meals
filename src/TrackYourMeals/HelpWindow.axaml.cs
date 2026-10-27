@@ -1,5 +1,5 @@
-using System.Windows;
-using System.Windows.Input;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace TrackYourMeals;
 
@@ -10,7 +10,7 @@ public partial class HelpWindow : Window
         InitializeComponent();
     }
 
-    private void Close_Executed(object sender, ExecutedRoutedEventArgs e)
+    private void Close_Click(object? sender, RoutedEventArgs e)
     {
         Close();
     }

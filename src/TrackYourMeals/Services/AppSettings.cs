@@ -4,7 +4,7 @@ namespace TrackYourMeals.Services;
 
 public sealed class AppSettings
 {
-    // Nulo até o usuário escolher; enquanto isso o app segue o tema do Windows.
+    // Nulo até o usuário escolher; enquanto isso o app segue o tema do sistema operacional.
     public AppTheme? Theme { get; set; }
 
     public double ZoomLevel { get; set; } = 1.0;

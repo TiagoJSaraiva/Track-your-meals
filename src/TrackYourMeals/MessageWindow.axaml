@@ -1,0 +1,33 @@
+<Window x:Class="TrackYourMeals.MessageWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Track Your Meals"
+        Width="440"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceBrush}"
+        Foreground="{DynamicResource InkBrush}"
+        FontSize="13">
+    <!-- Substitui o MessageBox do WPF, que não existe no Avalonia. -->
+    <Grid RowDefinitions="*,Auto">
+        <TextBlock x:Name="MessageText"
+                   Grid.Row="0"
+                   TextWrapping="Wrap"
+                   Margin="18,18,18,14" />
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource LineBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="18,12">
+            <Button Content="OK"
+                    Classes="primary"
+                    HorizontalAlignment="Right"
+                    MinWidth="96"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Click="Ok_Click" />
+        </Border>
+    </Grid>
+</Window>

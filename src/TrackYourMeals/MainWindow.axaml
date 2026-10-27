@@ -1,0 +1,541 @@
+<Window x:Class="TrackYourMeals.MainWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:TrackYourMeals.ViewModels"
+        mc:Ignorable="d"
+        x:DataType="vm:MainViewModel"
+        Title="Track Your Meals"
+        Width="1240"
+        Height="760"
+        MinWidth="640"
+        MinHeight="480"
+        Background="{DynamicResource SurfaceBrush}"
+        Foreground="{DynamicResource InkBrush}"
+        FontSize="13">
+    <!-- Atalhos de teclado (zoom e F1) são registrados em MainWindow.axaml.cs. -->
+
+    <Window.Resources>
+        <!-- As colunas não são ordenáveis; sem isso, cada cabeçalho reserva 32 px para o ícone de ordenação. -->
+        <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="Border.panel">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="Foreground" Value="{DynamicResource MutedInkBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <Style Selector="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBrush}" />
+            <Setter Property="RowBackground" Value="{DynamicResource InputBrush}" />
+        </Style>
+
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedInkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource HeaderBrush}" />
+            <Setter Property="SeparatorBrush" Value="{DynamicResource LineBrush}" />
+        </Style>
+
+        <Style Selector="DataGridCell">
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- As classes "alt" e "inactive" das linhas são definidas em DataGrid_LoadingRow. -->
+        <Style Selector="DataGridRow">
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+        </Style>
+
+        <Style Selector="DataGridRow.alt">
+            <Setter Property="Background" Value="{DynamicResource AltRowBrush}" />
+        </Style>
+
+        <Style Selector="DataGridRow.inactive">
+            <Setter Property="Foreground" Value="{DynamicResource InactiveInkBrush}" />
+            <Setter Property="Opacity" Value="0.78" />
+        </Style>
+
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Foreground" Value="{DynamicResource SelectionInkBrush}" />
+        </Style>
+
+        <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="{DynamicResource SelectionBrush}" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Window.Styles>
+
+    <ScrollViewer x:Name="RootScroll"
+                  HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <!-- A margem fica fora do LayoutTransformControl, então não é escalada pelo zoom. -->
+        <LayoutTransformControl x:Name="RootTransform"
+                                Margin="18">
+            <Grid x:Name="RootContent"
+                  RowDefinitions="Auto,Auto,*,Auto">
+
+                <Border Grid.Row="0"
+                        Classes="panel"
+                        Padding="18,14">
+                    <DockPanel LastChildFill="True">
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,0,16,0">
+                                <Button Content="−"
+                                        Command="{Binding ZoomOutCommand}"
+                                        ToolTip.Tip="Diminuir zoom (Ctrl −)"
+                                        Width="34"
+                                        Padding="0" />
+                                <Button Content="{Binding ZoomPercentLabel}"
+                                        Command="{Binding ResetZoomCommand}"
+                                        ToolTip.Tip="Restaurar zoom para 100% (Ctrl 0)"
+                                        MinWidth="58"
+                                        Margin="4,0" />
+                                <Button Content="+"
+                                        Command="{Binding ZoomInCommand}"
+                                        ToolTip.Tip="Aumentar zoom (Ctrl +)"
+                                        Width="34"
+                                        Padding="0" />
+                            </StackPanel>
+                            <Button Content="Ajuda"
+                                    Click="Help_Click"
+                                    ToolTip.Tip="Guia de uso (F1)"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{Binding ThemeToggleText}"
+                                    Command="{Binding ToggleThemeCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="Recarregar"
+                                    Command="{Binding LoadCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="Encerrar dia"
+                                    Command="{Binding CloseDayCommand}"
+                                    Classes="primary" />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock Text="Track Your Meals"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource InkBrush}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,6,0,0">
+                                <TextBlock Text="{Binding CurrentDayLabel}"
+                                           Foreground="{DynamicResource MutedInkBrush}" />
+                                <TextBlock Text="  |  "
+                                           Foreground="{DynamicResource MutedInkBrush}" />
+                                <TextBlock Text="{Binding DatabaseStatusLabel}"
+                                           Foreground="{DynamicResource MutedInkBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <UniformGrid Grid.Row="1"
+                             Columns="4"
+                             Margin="0,14,0,14">
+                    <Border Classes="panel"
+                            Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Calorias"
+                                       Classes="field-label" />
+                            <TextBlock Text="{Binding TotalCalories, StringFormat={}{0:N0} kcal}"
+                                       FontSize="24"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="panel"
+                            Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Proteína"
+                                       Classes="field-label" />
+                            <TextBlock Text="{Binding TotalProtein, StringFormat={}{0:N1} g}"
+                                       FontSize="24"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="panel"
+                            Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Carboidratos"
+                                       Classes="field-label" />
+                            <TextBlock Text="{Binding TotalCarbs, StringFormat={}{0:N1} g}"
+                                       FontSize="24"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="panel">
+                        <StackPanel>
+                            <TextBlock Text="Gorduras"
+                                       Classes="field-label" />
+                            <TextBlock Text="{Binding TotalFat, StringFormat={}{0:N1} g}"
+                                       FontSize="24"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <Grid Grid.Row="2"
+                      ColumnDefinitions="*,350">
+
+                    <Border Grid.Column="0"
+                            Classes="panel"
+                            Padding="0"
+                            Margin="0,0,14,0">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock Grid.Row="0"
+                                       Text="Plano alimentar e consumo do dia"
+                                       FontSize="17"
+                                       FontWeight="SemiBold"
+                                       Margin="14,12,14,10" />
+
+                            <!-- Campos editáveis ficam direto na célula (TextBox.cell), sem o modo de edição do DataGrid. -->
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding Foods}"
+                                      Margin="14,0,14,14"
+                                      LoadingRow="DataGrid_LoadingRow">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Alimento"
+                                                            Width="150">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Un."
+                                                            Width="70">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding UnitLabel}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Meta/dia"
+                                                            Width="84">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding DailyTargetQuantityText}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="kcal/un."
+                                                            Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding CaloriesPerUnitText}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Prot/un."
+                                                            Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding ProteinPerUnitText}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Carb/un."
+                                                            Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding CarbsPerUnitText}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Gord/un."
+                                                            Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBox Classes="cell"
+                                                         Text="{Binding FatPerUnitText}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Consumido"
+                                                            Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBlock Text="{Binding ConsumedQuantity, StringFormat={}{0:N2}}"
+                                                           VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Restante"
+                                                            Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBlock Text="{Binding RemainingQuantity, StringFormat={}{0:N2}}"
+                                                           VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Macros hoje"
+                                                            Width="175">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ConsumedCalories, StringFormat={}{0:N0} kcal}" />
+                                                    <TextBlock FontSize="11"
+                                                               Foreground="{DynamicResource MutedInkBrush}">
+                                                        <Run Text="{Binding ConsumedProtein, StringFormat={}{0:N1}}" />
+                                                        <Run Text=" P  " />
+                                                        <Run Text="{Binding ConsumedCarbs, StringFormat={}{0:N1}}" />
+                                                        <Run Text=" C  " />
+                                                        <Run Text="{Binding ConsumedFat, StringFormat={}{0:N1}}" />
+                                                        <Run Text=" G" />
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Registrar"
+                                                            Width="154">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <StackPanel Orientation="Horizontal"
+                                                            VerticalAlignment="Center">
+                                                    <TextBox Width="62"
+                                                             Text="{Binding LogQuantityText}"
+                                                             Margin="0,0,6,0" />
+                                                    <Button Content="+"
+                                                            Width="36"
+                                                            Padding="0"
+                                                            Command="{Binding AddLogCommand}"
+                                                            Classes="primary" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Status"
+                                                            Width="76">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <TextBlock Text="{Binding StatusText}"
+                                                           VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Ações"
+                                                            Width="176">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="vm:FoodRowViewModel">
+                                                <StackPanel Orientation="Horizontal"
+                                                            VerticalAlignment="Center">
+                                                    <Button Content="Salvar"
+                                                            Command="{Binding SaveCommand}"
+                                                            Margin="0,0,6,0" />
+                                                    <Button Content="{Binding ToggleActiveText}"
+                                                            Command="{Binding ToggleActiveCommand}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Column="1"
+                                  x:Name="SidePanelScroll"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Grid RowDefinitions="Auto,*"
+                              MinHeight="{Binding #SidePanelScroll.Viewport.Height}">
+
+                            <Border Grid.Row="0"
+                                    Classes="panel"
+                                    Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Adicionar alimento"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,12" />
+
+                                    <TextBlock Text="Nome"
+                                               Classes="field-label" />
+                                    <TextBox Text="{Binding NewFoodName}"
+                                             Margin="0,0,0,8" />
+
+                                    <Grid ColumnDefinitions="*,*"
+                                          Margin="0,0,0,8">
+                                        <StackPanel Grid.Column="0"
+                                                    Margin="0,0,8,0">
+                                            <TextBlock Text="Unidade"
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodUnitLabel}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Meta diária"
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodDailyTargetQuantityText}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*"
+                                          RowDefinitions="Auto,Auto"
+                                          Margin="0,0,0,12">
+                                        <StackPanel Grid.Row="0"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,8,8">
+                                            <TextBlock Text="kcal/un."
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodCaloriesPerUnitText}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0"
+                                                    Grid.Column="1"
+                                                    Margin="0,0,0,8">
+                                            <TextBlock Text="Proteína/un."
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodProteinPerUnitText}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,8,0">
+                                            <TextBlock Text="Carboidrato/un."
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodCarbsPerUnitText}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1">
+                                            <TextBlock Text="Gordura/un."
+                                                       Classes="field-label" />
+                                            <TextBox Text="{Binding NewFoodFatPerUnitText}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Button Content="Adicionar ao plano"
+                                            Command="{Binding AddFoodCommand}"
+                                            Classes="primary"
+                                            HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Classes="panel"
+                                    MinHeight="260">
+                                <Grid RowDefinitions="Auto,*">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Últimos registros"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,12" />
+
+                                    <!-- Nos limites do scroll, o DataGrid repassa a roda do mouse para a coluna lateral. -->
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding RecentEntries}"
+                                              LoadingRow="DataGrid_LoadingRow">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="Hora"
+                                                                    Width="58">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate x:DataType="vm:FoodLogEntryViewModel">
+                                                        <TextBlock Text="{Binding LoggedAtLabel}"
+                                                                   VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTemplateColumn Header="Alimento"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate x:DataType="vm:FoodLogEntryViewModel">
+                                                        <TextBlock Text="{Binding FoodName}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTemplateColumn Header="Qtd."
+                                                                    Width="82">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate x:DataType="vm:FoodLogEntryViewModel">
+                                                        <TextBlock Text="{Binding QuantityLabel}"
+                                                                   VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTemplateColumn Header="kcal"
+                                                                    Width="58">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate x:DataType="vm:FoodLogEntryViewModel">
+                                                        <TextBlock Text="{Binding Calories, StringFormat={}{0:N0}}"
+                                                                   VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid Grid.Row="3"
+                      ColumnDefinitions="*,*"
+                      Margin="0,12,0,0">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusMessage}"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding ErrorMessage}"
+                               Foreground="{DynamicResource ErrorBrush}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Right"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Grid>
+        </LayoutTransformControl>
+    </ScrollViewer>
+</Window>
