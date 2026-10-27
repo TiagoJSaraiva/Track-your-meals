@@ -9,6 +9,10 @@ namespace TrackYourMeals.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
+    private const double MinZoomLevel = 0.5;
+    private const double MaxZoomLevel = 2.0;
+    private const double ZoomStep = 0.1;
+
     private readonly DietDayService dietDayService;
     private readonly FoodService foodService;
     private readonly FoodLogService foodLogService;
@@ -51,6 +55,11 @@ public sealed class MainViewModel : ObservableObject
         AddFoodCommand = new AsyncRelayCommand(AddFoodAsync, CanRunCommand);
         CloseDayCommand = new AsyncRelayCommand(CloseDayAsync, CanRunCommand);
         ToggleThemeCommand = new RelayCommand(ToggleTheme);
+        ZoomInCommand = new RelayCommand(() => ZoomLevel += ZoomStep, () => ZoomLevel < MaxZoomLevel);
+        ZoomOutCommand = new RelayCommand(() => ZoomLevel -= ZoomStep, () => ZoomLevel > MinZoomLevel);
+        ResetZoomCommand = new RelayCommand(() => ZoomLevel = 1.0);
+
+        settings.ZoomLevel = ClampZoomLevel(settings.ZoomLevel);
     }
 
     public ObservableCollection<FoodRowViewModel> Foods { get; } = new();
@@ -68,6 +77,34 @@ public sealed class MainViewModel : ObservableObject
     public string ThemeToggleText => themeService.CurrentTheme == AppTheme.Dark
         ? "Modo claro"
         : "Modo escuro";
+
+    public RelayCommand ZoomInCommand { get; }
+
+    public RelayCommand ZoomOutCommand { get; }
+
+    public RelayCommand ResetZoomCommand { get; }
+
+    public double ZoomLevel
+    {
+        get => settings.ZoomLevel;
+        set
+        {
+            var zoomLevel = ClampZoomLevel(value);
+            if (settings.ZoomLevel == zoomLevel)
+            {
+                return;
+            }
+
+            settings.ZoomLevel = zoomLevel;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ZoomPercentLabel));
+            ZoomInCommand.NotifyCanExecuteChanged();
+            ZoomOutCommand.NotifyCanExecuteChanged();
+            SaveSettings();
+        }
+    }
+
+    public string ZoomPercentLabel => $"{ZoomLevel * 100:0}%";
 
     public bool IsBusy
     {
@@ -322,6 +359,16 @@ public sealed class MainViewModel : ObservableObject
 
         settings.Theme = theme;
         SaveSettings();
+    }
+
+    private static double ClampZoomLevel(double zoomLevel)
+    {
+        if (!double.IsFinite(zoomLevel))
+        {
+            return 1.0;
+        }
+
+        return Math.Round(Math.Clamp(zoomLevel, MinZoomLevel, MaxZoomLevel), 2);
     }
 
     private void SaveSettings()
