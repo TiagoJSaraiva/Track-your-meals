@@ -24,6 +24,11 @@
         <KeyBinding Key="NumPad0" Modifiers="Control" Command="{Binding ResetZoomCommand}" />
     </Window.InputBindings>
 
+    <!-- ApplicationCommands.Help já tem F1 como atalho padrão. -->
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="Help_Executed" />
+    </Window.CommandBindings>
+
     <Window.Resources>
         <Style x:Key="PanelBorderStyle" TargetType="{x:Type Border}">
             <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
@@ -134,7 +139,12 @@
                                     Width="34"
                                     Padding="0" />
                         </StackPanel>
-                        <Button Content="{Binding ThemeToggleText}"
+                        <Button Content="Ajuda"
+                            Command="ApplicationCommands.Help"
+                            ToolTip="Guia de uso (F1)"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,8,0" />
+                    <Button Content="{Binding ThemeToggleText}"
                                 Command="{Binding ToggleThemeCommand}"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 Margin="0,0,8,0" />

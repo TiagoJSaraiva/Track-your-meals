@@ -17,6 +17,11 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private void Help_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        new HelpWindow { Owner = this }.ShowDialog();
+    }
+
     private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || DataContext is not MainViewModel viewModel)

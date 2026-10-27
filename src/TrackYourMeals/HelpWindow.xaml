@@ -1,0 +1,204 @@
+<Window x:Class="TrackYourMeals.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Guia de uso - Track Your Meals"
+        Width="680"
+        Height="640"
+        MinWidth="420"
+        MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceBrush}"
+        Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13">
+    <!--
+        Guia de uso do sistema. Revise este conteúdo sempre que houver
+        alteração de funcionalidade, interface ou atalhos (ver AGENTS.md).
+    -->
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="ApplicationCommands.Close" />
+    </Window.InputBindings>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="Close_Executed" />
+    </Window.CommandBindings>
+
+    <Window.Resources>
+        <Style x:Key="SectionBorderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16,14" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style x:Key="ParagraphStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <Style x:Key="BulletStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ParagraphStyle}">
+            <Setter Property="Margin" Value="12,0,0,4" />
+        </Style>
+
+        <Style x:Key="ShortcutKeyStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,16,6" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="18,18,18,6">
+                <TextBlock Text="Guia de uso"
+                           FontSize="24"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Como montar seu plano alimentar e acompanhar o consumo do dia."
+                           Foreground="{DynamicResource MutedInkBrush}"
+                           Margin="0,4,0,16" />
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="1. Visão geral" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="O Track Your Meals tem duas partes: o plano alimentar, que é a lista de alimentos com a meta diária de cada um, e o consumo do dia, que são as quantidades que você registra ao longo do dia." />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="Os cartões no topo (Calorias, Proteína, Carboidratos e Gorduras) somam tudo o que foi consumido no dia atual. Todos os dados ficam salvos apenas neste computador." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="2. Adicionar um alimento ao plano" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="Use o painel &quot;Adicionar alimento&quot;, à direita:" />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Nome: como o alimento vai aparecer na planilha." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Unidade: a medida usada para contar o alimento, como &quot;g&quot;, &quot;100 g&quot;, &quot;unidade&quot; ou &quot;2 fatias&quot;." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Meta diária: quantas unidades você planeja consumir por dia." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• kcal, Proteína, Carboidrato e Gordura: valores de UMA unidade. Exemplo: se a unidade é &quot;100 g&quot;, informe os valores para 100 g." />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Margin="0,6,0,0"
+                                   Text="Clique em &quot;Adicionar ao plano&quot;. Números aceitam vírgula ou ponto como separador decimal (2,5 ou 2.5)." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="3. Editar ou desativar um alimento" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Para editar, clique na célula da planilha (nome, unidade, meta ou valores por unidade), altere o valor e clique em &quot;Salvar&quot; na coluna Ações da mesma linha." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Salve logo após editar: qualquer outra ação (registrar consumo, adicionar alimento, salvar outra linha ou recarregar) atualiza a planilha e descarta edições ainda não salvas." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• &quot;Desativar&quot; tira o alimento do plano sem apagar o histórico: a linha fica acinzentada e não aceita novos registros. Use &quot;Reativar&quot; para voltar a usá-lo." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="4. Registrar o que você comeu" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="Na coluna &quot;Registrar&quot;, digite a quantidade consumida, na unidade do alimento, e clique em &quot;+&quot;. Exemplo: unidade &quot;100 g&quot; e você comeu 250 g, digite 2,5." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Consumido: total registrado hoje para o alimento." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Restante: meta diária menos o consumido (negativo quando a meta foi ultrapassada)." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Macros hoje: calorias e macronutrientes (P, C, G) consumidos desse alimento." />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Margin="0,6,0,0"
+                                   Text="O painel &quot;Últimos registros&quot; mostra os registros mais recentes do dia atual, do mais novo para o mais antigo. Em telas pequenas, role a coluna da direita para vê-lo." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="5. Encerrar o dia" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="O dia não vira sozinho à meia-noite. Quando terminar o dia, clique em &quot;Encerrar dia&quot;: o dia atual é fechado (sem pedir confirmação) e um novo começa, com o consumo zerado. O plano alimentar continua o mesmo." />
+                        <TextBlock Style="{StaticResource ParagraphStyle}"
+                                   Text="&quot;Recarregar&quot; lê novamente os dados salvos." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="6. Aparência e zoom" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• &quot;Modo escuro&quot; / &quot;Modo claro&quot;, no cabeçalho, alterna o tema. Na primeira vez, o app segue o tema do Windows." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• Os botões &quot;−&quot; e &quot;+&quot; ajustam o zoom entre 50% e 200%; clique no percentual para voltar a 100%. Se a interface não couber na tela, diminua o zoom; com zoom alto, use as barras de rolagem." />
+                        <TextBlock Style="{StaticResource BulletStyle}"
+                                   Text="• O tema e o zoom escolhidos ficam salvos para a próxima vez que você abrir o app." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="7. Atalhos de teclado" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="Ctrl +" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Aumentar o zoom" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="Ctrl −" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Diminuir o zoom" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="Ctrl 0" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Restaurar o zoom para 100%" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="Ctrl + roda do mouse" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Aumentar ou diminuir o zoom" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="F1" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Abrir este guia" />
+                            <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource ShortcutKeyStyle}" Text="Esc" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ParagraphStyle}" Text="Fechar este guia" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource LineBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="18,12">
+            <Button Content="Fechar"
+                    Command="ApplicationCommands.Close"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    HorizontalAlignment="Right"
+                    MinWidth="96"
+                    IsDefault="True" />
+        </Border>
+    </Grid>
+</Window>
